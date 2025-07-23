@@ -3,6 +3,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App-Final';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
 // アプリケーションのマウント
@@ -15,9 +16,9 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 
 root.render(
-  <React.StrictMode>
+  <ErrorBoundary>
     <App />
-  </React.StrictMode>
+  </ErrorBoundary>
 );
 
 // アプリケーション起動後にローディング画面を非表示

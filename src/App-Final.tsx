@@ -108,27 +108,23 @@ const AppFinal: React.FC = () => {
         api.getPosts()
       ]);
 
-      if (statsResponse.success && statsResponse.data) {
-        setAppState(prev => ({
-          ...prev,
-          dashboardStats: statsResponse.data,
-          isLoading: false
-        }));
-      }
+      setAppState(prev => {
+        const newState = { ...prev, isLoading: false };
+        
+        if (statsResponse.success && statsResponse.data) {
+          newState.dashboardStats = statsResponse.data;
+        }
 
-      if (historyResponse.success && historyResponse.data) {
-        setAppState(prev => ({
-          ...prev,
-          scrapingHistory: historyResponse.data
-        }));
-      }
+        if (historyResponse.success && historyResponse.data) {
+          newState.scrapingHistory = historyResponse.data;
+        }
 
-      if (postsResponse.success && postsResponse.data) {
-        setAppState(prev => ({
-          ...prev,
-          posts: postsResponse.data.posts || []
-        }));
-      }
+        if (postsResponse.success && postsResponse.data) {
+          newState.posts = postsResponse.data.posts || [];
+        }
+        
+        return newState;
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'ダッシュボード統計の取得に失敗しました';
       console.error('Dashboard stats error:', error);
@@ -350,7 +346,7 @@ const AppFinal: React.FC = () => {
                   {appState.scrapingHistory.length > 0 ? (
                     appState.scrapingHistory.map((history, index) => (
                       <div
-                        key={history.id || index}
+                        key={`history-${history.id || index}-${history.timestamp || Date.now()}`}
                         className={`
                           p-3 rounded border
                           ${history.status === 'success' 

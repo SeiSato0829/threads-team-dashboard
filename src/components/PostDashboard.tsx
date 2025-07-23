@@ -159,8 +159,8 @@ const PostDashboard: React.FC<PostDashboardProps> = ({ posts, onEdit, onDelete }
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredPosts.map((post) => (
-                <tr key={post.id} className="hover:bg-gray-50">
+              {filteredPosts.map((post, index) => (
+                <tr key={`post-${post.id || index}-${post.text?.substring(0, 10) || ''}`} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(post.status)}`}>
                       {getStatusIcon(post.status)}
