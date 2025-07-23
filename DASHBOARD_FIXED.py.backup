@@ -1,0 +1,269 @@
+#!/usr/bin/env python3
+"""
+📊 完全修正版 Threads投稿管理ダッシュボード
+"""
+
+import streamlit as st
+import sqlite3
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from datetime import datetime, timedelta, date
+import json
+import os
+from typing import List, Dict, Any
+
+# ページ設定
+st.set_page_config(
+    page_title="Threads投稿管理ダッシュボード",
+    page_icon="📱",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+class FixedThreadsDashboard:
+    """📊 修正版Threadsダッシュボード"""
+    
+    def __init__(self):
+        # データベース設定を実際のテーブル名に合わせて修正
+        self.db_configs = {
+            "scheduled_posts.db": "scheduled_posts",
+            "threads_optimized.db": "threads_posts",
+            "buzz_history.db": "buzz_history", 
+            "viral_history.db": "post_history"
+        }
+    
+    def get_all_posts(self) -> pd.DataFrame:
+        """全投稿データ取得"""
+        all_posts = []
+        
+        for db_path, table_name in self.db_configs.items():
+            if not os.path.exists(db_path):
+                st.info(f"📂 {db_path} が見つかりません（未生成の場合は正常です）")
+                continue
+                
+            try:
+                posts_df = self._get_posts_from_db(db_path, table_name)
+                if not posts_df.empty:
+                    posts_df['source'] = db_path.replace('.db', '')
+                    all_posts.append(posts_df)
+                    st.success(f"✅ {db_path}: {len(posts_df)}件読み込み")
+                    
+            except Exception as e:
+                st.error(f"❌ {db_path} エラー: {e}")
+                continue
+        
+        if all_posts:
+            combined_df = pd.concat(all_posts, ignore_index=True, sort=False)
+            combined_df = self._clean_dataframe(combined_df)
+            return combined_df
+        else:
+            return pd.DataFrame()
+    
+    def _get_posts_from_db(self, db_path: str, table_name: str) -> pd.DataFrame:
+        """データベースから投稿取得"""
+        conn = sqlite3.connect(db_path)
+        
+        try:
+            # テーブル存在確認
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                (table_name,)
+            )
+            
+            if not cursor.fetchone():
+                return pd.DataFrame()
+            
+            # カラム情報取得
+            cursor.execute(f"PRAGMA table_info({table_name})")
+            columns_info = cursor.fetchall()
+            available_columns = [col[1] for col in columns_info]
+            
+            # 基本クエリ構築
+            select_columns = ['id', 'content']
+            
+            # 利用可能なカラムを追加
+            optional_columns = {
+                'scheduled_time': 'scheduled_time',
+                'generated_at': 'scheduled_time', 
+                'created_at': 'scheduled_time',
+                'status': 'status',
+                'pattern_type': 'pattern_type',
+                'engagement_score': 'engagement_prediction',
+                'engagement_prediction': 'engagement_prediction',
+                'actual_engagement': 'actual_engagement',
+                'clicks': 'clicks',
+                'shares': 'shares', 
+                'comments': 'comments',
+                'likes': 'likes',
+                'hashtags': 'hashtags',
+                'hashtag': 'hashtags'
+            }
+            
+            for col_name, target_name in optional_columns.items():
+                if col_name in available_columns and target_name not in [c.split(' as ')[-1] for c in select_columns]:
+                    if col_name == target_name:
+                        select_columns.append(col_name)
+                    else:
+                        select_columns.append(f"{col_name} as {target_name}")
+            
+            # デフォルト値付きカラム追加
+            defaults = {
+                'clicks': 0,
+                'shares': 0,
+                'comments': 0, 
+                'likes': 0,
+                'actual_engagement': 0.0,
+                'engagement_prediction': 0.0
+            }
+            
+            for col_name, default_val in defaults.items():
+                if col_name not in [c.split(' as ')[-1] for c in select_columns]:
+                    select_columns.append(f"{default_val} as {col_name}")
+            
+            query = f"""
+            SELECT {', '.join(select_columns)}
+            FROM {table_name}
+            ORDER BY CASE 
+                WHEN scheduled_time IS NOT NULL THEN scheduled_time
+                WHEN generated_at IS NOT NULL THEN generated_at  
+                WHEN created_at IS NOT NULL THEN created_at
+                ELSE datetime('now')
+            END DESC
+            LIMIT 100
+            """
+            
+            df = pd.read_sql_query(query, conn)
+            return df
+            
+        finally:
+            conn.close()
+    
+    def _clean_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+        """データフレームクリーニング"""
+        # 時間カラム変換
+        if 'scheduled_time' in df.columns:
+            df['scheduled_time'] = pd.to_datetime(df['scheduled_time'], errors='coerce')
+        
+        # 数値カラムの処理
+        numeric_columns = ['engagement_prediction', 'actual_engagement', 'clicks', 'shares', 'comments', 'likes']
+        for col in numeric_columns:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+        
+        # 文字列カラムの処理
+        string_columns = ['status', 'pattern_type', 'hashtags']
+        for col in string_columns:
+            if col in df.columns:
+                df[col] = df[col].fillna('N/A')
+        
+        return df
+
+def main():
+    """メイン画面"""
+    st.title("📱 Threads投稿管理ダッシュボード")
+    st.markdown("### 完全修正版・エラー解消")
+    
+    # ダッシュボード初期化
+    dashboard = FixedThreadsDashboard()
+    
+    # データ取得
+    with st.spinner("データを読み込み中..."):
+        df = dashboard.get_all_posts()
+    
+    # データ表示
+    if not df.empty:
+        st.success(f"🎉 {len(df)}件の投稿データを読み込みました")
+        
+        # 基本統計
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("総投稿数", f"{len(df):,}")
+        
+        with col2:
+            avg_engagement = df['actual_engagement'].mean()
+            st.metric("平均エンゲージメント", f"{avg_engagement:.1f}")
+        
+        with col3:
+            total_likes = int(df['likes'].sum())
+            st.metric("総いいね", f"{total_likes:,}")
+        
+        with col4:
+            total_clicks = int(df['clicks'].sum())  
+            st.metric("総クリック", f"{total_clicks:,}")
+        
+        # データソース内訳
+        if 'source' in df.columns:
+            st.subheader("📊 データソース別内訳")
+            source_counts = df['source'].value_counts()
+            
+            fig = px.pie(
+                values=source_counts.values,
+                names=source_counts.index,
+                title="投稿データソース分布"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        
+        # 最新投稿一覧
+        st.subheader("📝 最新投稿")
+        
+        # 表示件数選択
+        display_count = st.selectbox("表示件数", [5, 10, 20, 50], index=0)
+        
+        recent_posts = df.head(display_count)
+        
+        for idx, post in recent_posts.iterrows():
+            scheduled_time = post.get('scheduled_time')
+            time_str = scheduled_time.strftime('%m/%d %H:%M') if pd.notna(scheduled_time) else 'N/A'
+            
+            pattern = post.get('pattern_type', 'N/A')
+            source = post.get('source', 'N/A')
+            status = post.get('status', 'N/A')
+            
+            with st.expander(f"{time_str} - {pattern} ({source}) [{status}]"):
+                content = post.get('content', '')
+                display_content = content[:200] + "..." if len(content) > 200 else content
+                st.write(display_content)
+                
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("👍 いいね", int(post.get('likes', 0)))
+                with col2:
+                    st.metric("🔗 クリック", int(post.get('clicks', 0)))
+                with col3:
+                    st.metric("💬 コメント", int(post.get('comments', 0)))
+                with col4:
+                    st.metric("📊 エンゲージメント", f"{post.get('actual_engagement', 0):.1f}")
+        
+        # 詳細データテーブル
+        if st.checkbox("詳細データテーブル表示"):
+            st.subheader("🔍 全データテーブル")
+            st.dataframe(df, use_container_width=True)
+    
+    else:
+        st.warning("📭 投稿データがありません")
+        
+        st.markdown("""
+        ### 🚀 投稿データを作成するには:
+        
+        **1. 投稿生成**
+        ```bash
+        THREADS_ULTIMATE_START.bat
+        ```
+        
+        **2. 投稿実行** 
+        ```bash
+        BUZZ_SETUP.bat
+        ```
+        
+        **3. ダッシュボード更新**
+        - このページを再読み込み（F5）
+        """)
+        
+        if st.button("🔄 今すぐデータを再読み込み"):
+            st.rerun()
+
+if __name__ == "__main__":
+    main()

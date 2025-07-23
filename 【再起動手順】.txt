@@ -1,0 +1,68 @@
+========================================
+Threads自動投稿システム v3.2 - 再起動手順
+========================================
+
+■ 最も簡単な方法（推奨）
+
+1. 以下のファイルをダブルクリック：
+   C:\Users\music-020\threads-auto-post\restart-system.bat
+
+
+■ 手動で再起動する場合
+
+【ステップ1】バックエンドサーバーの起動
+1. コマンドプロンプトを開く（Windowsキー + R → cmd → Enter）
+2. 以下のコマンドを実行：
+   
+   cd C:\Users\music-020\threads-auto-post
+   python complete_backend_server.py
+
+【ステップ2】フロントエンドアプリの起動
+1. 新しいコマンドプロンプトまたはPowerShellを開く
+2. 以下のコマンドを実行：
+   
+   cd C:\Users\music-020\threads-auto-post
+   npm run dev
+
+【ステップ3】ブラウザでアクセス
+   http://localhost:5173
+
+
+■ トラブルシューティング
+
+Q: 「ポートが既に使用されています」エラー
+A: 前のプロセスが残っている可能性があります
+   1. タスクマネージャーを開く（Ctrl + Shift + Esc）
+   2. 「python.exe」と「node.exe」を探して終了
+   3. 再度起動コマンドを実行
+
+Q: 「Module not found」エラー
+A: 依存関係を再インストール
+   pip install flask flask-cors anthropic requests schedule pandas
+   npm install
+
+Q: フロントエンドが起動しない
+A: node_modulesを削除して再インストール
+   rmdir /s node_modules
+   npm install
+   npm run dev
+
+
+■ システム停止方法
+
+各ウィンドウで Ctrl + C を押すか、ウィンドウを閉じる
+
+
+■ 保存しておくと便利なコマンド
+
+バックエンド起動：
+python complete_backend_server.py
+
+フロントエンド起動：
+npm run dev
+
+依存関係インストール：
+pip install flask flask-cors anthropic requests schedule pandas
+npm install
+
+========================================

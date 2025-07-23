@@ -1,0 +1,67 @@
+========================================
+Threads自動投稿システム 手動起動手順
+========================================
+
+■ 事前準備
+1. Pythonのインストール
+   - https://www.python.org/downloads/ からダウンロード
+   - インストール時に「Add Python to PATH」にチェック
+
+2. Node.jsのインストール（既にインストール済みの場合はスキップ）
+   - https://nodejs.org/ からダウンロード
+
+■ 起動手順
+
+【方法1】コマンドプロンプトを使った起動
+
+1. Windowsキー + R → 「cmd」と入力 → Enter
+
+2. 以下のコマンドを順番に実行：
+
+   cd C:\Users\music-020\threads-auto-post
+   
+   pip install flask flask-cors anthropic requests pandas schedule
+   
+   start python complete_backend_server.py
+   
+   start npm run dev
+
+3. ブラウザで http://localhost:5173 を開く
+
+
+【方法2】個別ウィンドウで起動
+
+1. バックエンドサーバーの起動
+   - C:\Users\music-020\threads-auto-post フォルダを開く
+   - 空白部分で右クリック → 「ターミナルで開く」
+   - 以下を入力：
+     python complete_backend_server.py
+
+2. フロントエンドの起動（新しいウィンドウで）
+   - 同じフォルダで新しいターミナルを開く
+   - 以下を入力：
+     npm run dev
+
+3. ブラウザで http://localhost:5173 を開く
+
+
+【方法3】簡易版で確認
+
+バックエンドなしで動作確認したい場合：
+1. C:\Users\music-020\threads-auto-post\standalone.html をダブルクリック
+2. ブラウザで自動的に開きます
+
+
+■ トラブルシューティング
+
+Q: 'python' is not recognized
+A: Pythonがインストールされていません。上記URLからインストール
+
+Q: npm: command not found
+A: Node.jsがインストールされていません
+
+Q: ポートが使用中
+A: 他のアプリケーションがポート5000または5173を使用しています
+   → タスクマネージャーで該当プロセスを終了
+
+========================================

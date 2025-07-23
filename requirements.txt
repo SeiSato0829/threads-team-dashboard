@@ -1,0 +1,26 @@
+# Threads自動投稿システム - Python依存関係
+
+# Webフレームワーク
+flask==3.0.0
+flask-cors==4.0.0
+
+# AI/API
+anthropic==0.21.3
+
+# HTTP通信
+requests==2.31.0
+
+# データ処理
+pandas==2.1.4
+python-dateutil==2.8.2
+
+# 環境変数管理
+python-dotenv==1.0.0
+
+# ログ・デバッグ
+colorlog==6.8.0
+
+# オプション（必要に応じて）
+# supabase==2.3.0  # Supabase使用時
+# google-api-python-client==2.108.0  # Google Sheets使用時
+# cloudinary==1.36.0  # 画像管理使用時

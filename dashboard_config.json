@@ -1,0 +1,9 @@
+{
+  "auto_start_dashboard": true,
+  "dashboard_port": 8501,
+  "auto_update_interval": 300,
+  "enable_auto_reports": true,
+  "report_schedule": "daily",
+  "team_notifications": true,
+  "performance_tracking": true
+}

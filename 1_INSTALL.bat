@@ -1,0 +1,1 @@
+pip install streamlit fastapi uvicorn aiohttp pandas numpy scikit-learn plotly python-dotenv

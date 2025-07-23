@@ -1,0 +1,1 @@
+web: sh setup.sh && streamlit run THREADS_DASHBOARD.py

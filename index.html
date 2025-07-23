@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Threads 自動投稿システム v3.2 - 完全版</title>
+    <meta name="description" content="AI搭載のThreads自動投稿システム。Claude APIとBuffer APIを使用して多様性のある投稿を自動生成・投稿。" />
+    <meta name="author" content="Threads Auto Post System" />
+    <style>
+      /* 初期ローディング画面 */
+      .loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        z-index: 9999;
+        opacity: 1;
+        transition: opacity 0.5s ease-out;
+      }
+      
+      .loading-screen.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+      
+      .loading-text {
+        font-size: 18px;
+        font-weight: 500;
+        margin-bottom: 10px;
+      }
+      
+      .loading-subtitle {
+        font-size: 14px;
+        opacity: 0.8;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* エラー画面 */
+      .error-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #f8d7da;
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: #721c24;
+        z-index: 9999;
+      }
+      
+      .error-screen.show {
+        display: flex;
+      }
+      
+      .error-icon {
+        font-size: 48px;
+        margin-bottom: 20px;
+      }
+      
+      .error-title {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+      
+      .error-message {
+        font-size: 16px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      
+      .error-button {
+        background: #dc3545;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      
+      .error-button:hover {
+        background: #c82333;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 初期ローディング画面 -->
+    <div id="loading-screen" class="loading-screen">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Threads 自動投稿システム v3.2</div>
+      <div class="loading-subtitle">システムを起動中...</div>
+    </div>
+    
+    <!-- エラー画面 -->
+    <div id="error-screen" class="error-screen">
+      <div class="error-icon">⚠️</div>
+      <div class="error-title">システムエラー</div>
+      <div class="error-message" id="error-message">
+        システムの起動に失敗しました。<br>
+        ページを再読み込みしてください。
+      </div>
+      <button class="error-button" onclick="window.location.reload()">再読み込み</button>
+    </div>
+    
+    <!-- メインアプリケーション -->
+    <div id="root"></div>
+    
+    <script>
+      // エラーハンドリング
+      window.addEventListener('error', function(event) {
+        console.error('Global error:', event.error);
+        showErrorScreen('JavaScript エラーが発生しました: ' + event.error.message);
+      });
+      
+      window.addEventListener('unhandledrejection', function(event) {
+        console.error('Unhandled promise rejection:', event.reason);
+        showErrorScreen('Promise エラーが発生しました: ' + event.reason);
+      });
+      
+      function showErrorScreen(message) {
+        const errorScreen = document.getElementById('error-screen');
+        const errorMessage = document.getElementById('error-message');
+        const loadingScreen = document.getElementById('loading-screen');
+        
+        if (errorMessage) {
+          errorMessage.innerHTML = message;
+        }
+        
+        if (loadingScreen) {
+          loadingScreen.classList.add('hidden');
+        }
+        
+        if (errorScreen) {
+          errorScreen.classList.add('show');
+        }
+      }
+      
+      // アプリケーション起動後にローディング画面を非表示
+      function hideLoadingScreen() {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+          setTimeout(() => {
+            loadingScreen.classList.add('hidden');
+          }, 1000);
+        }
+      }
+      
+      // システム起動の監視
+      let startTime = Date.now();
+      let maxLoadTime = 30000; // 30秒でタイムアウト（延長）
+      
+      // Reactアプリケーションの起動を待つ
+      window.addEventListener('DOMContentLoaded', () => {
+        // アプリケーションが正常に起動したか確認
+        setTimeout(() => {
+          const rootElement = document.getElementById('root');
+          if (rootElement && rootElement.children.length > 0) {
+            hideLoadingScreen();
+          }
+        }, 2000);
+      });
+      
+      // タイムアウト処理（30秒に延長）
+      setTimeout(() => {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen && !loadingScreen.classList.contains('hidden')) {
+          showErrorScreen('システムの起動がタイムアウトしました。<br>サーバーが起動していることを確認してください。');
+        }
+      }, maxLoadTime);
+    </script>
+    
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
